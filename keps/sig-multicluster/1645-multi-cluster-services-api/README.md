@@ -109,15 +109,15 @@ tags, and then generate with `hack/update-toc.sh`.
     - [Publish Not-Ready Addresses](#publish-not-ready-addresses)
   - [Test Plan](#test-plan)
   - [Graduation Criteria](#graduation-criteria)
+    - [Alpha -&gt; Beta Graduation](#alpha---beta-graduation)
+    - [Beta -&gt; GA Graduation](#beta---ga-graduation)
   - [Upgrade / Downgrade Strategy](#upgrade--downgrade-strategy)
   - [Version Skew Strategy](#version-skew-strategy)
 - [Implementation History](#implementation-history)
-- [Drawbacks](#drawbacks)
 - [Alternatives](#alternatives)
   - [<code>ObjectReference</code> in <code>ServiceExport.Spec</code> to directly map to a Service](#-in--to-directly-map-to-a-service)
   - [Export services via label selector](#export-services-via-label-selector)
   - [Export via annotation](#export-via-annotation)
-- [Infrastructure Needed (optional)](#infrastructure-needed-optional)
 <!-- /toc -->
 
 ## Release Signoff Checklist
@@ -733,6 +733,17 @@ slices from that cluster.
 
 ### Test Plan
 
+E2E tests can use [kind](https://kind.sigs.k8s.io/) to create multiple
+clusters to test various multi-cluster scenarios. To meet conditions required by
+MCS, cluster networks will be flattened by adding static routes between nodes in
+each cluster.
+
+- Test cluster A can contact service imported from cluster B and route to
+  expected endpoints.
+- Test cluster A local service not impacted by same-name imported service.
+- Test cluster A can contact service imported from cluster A and B and route to
+  expected endpoints in both clusters.
+
 <!--
 **Note:** *Not required until targeted at a release.*
 
@@ -752,6 +763,20 @@ when drafting this test plan.
 -->
 
 ### Graduation Criteria
+
+#### Alpha -> Beta Graduation
+
+- A detailed DNS spec for multi-cluster services.
+- NetworkPolicy either solved or explicitly ruled out.
+- API group chosen and approved.
+- Kube-proxy can consume ServiceImport and EndpointSlice.
+- E2E tests exist for MCS services.
+- Beta -> GA Graduation criteria defined.
+
+#### Beta -> GA Graduation
+
+- Scalability/performance testing, understanding impact on cluster-local service
+  scalability.
 
 <!--
 **Note:** *Not required until targeted at a release.*
@@ -809,6 +834,9 @@ in back-to-back releases.
 
 ### Upgrade / Downgrade Strategy
 
+Kube-proxy and must be updated to a supported version before MCS services may be
+used. To take advantage of MCS DNS, the DNS provider must be upgraded to a
+version that implements the MCS spec.
 <!--
 If applicable, how will the component be upgraded and downgraded? Make sure
 this is in the test plan.
@@ -823,6 +851,9 @@ enhancement:
 
 ### Version Skew Strategy
 
+Kube-proxy and DNS must be upgraded before new MCS API versions may be used.
+Backwards compatibility will be maintained in accordance with the
+[deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/).
 <!--
 If applicable, how will the component handle version skew with other
 components? What are the guarantees? Make sure this is in the test plan.
@@ -849,9 +880,9 @@ Major milestones might include
 - when the KEP was retired or superseded
 -->
 
+<!--
 ## Drawbacks
 
-<!--
 Why should this KEP _not_ be implemented?
 -->
 
@@ -916,9 +947,9 @@ achieve the same result. As the use of a multi-cluster service implementation
 would be an optional addon, it doesn't warrant a change to such a fundamental
 resource.
 
+<!--
 ## Infrastructure Needed (optional)
 
-<!--
 Use this section if you need things from the project/SIG.  Examples include a
 new subproject, repos requested, github details.  Listing these here allows a
 SIG to get the process for these resources started right away.
